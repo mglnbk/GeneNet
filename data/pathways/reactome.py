@@ -24,14 +24,14 @@ def add_edges(G, node, n_levels):
     return G
 
 
-def complete_network(G, n_leveles=4):
-    sub_graph = nx.ego_graph(G, 'root', radius=n_leveles)
+def complete_network(G, n_levels=4):
+    sub_graph = nx.ego_graph(G, 'root', radius=n_levels)
     terminal_nodes = [n for n, d in sub_graph.out_degree() if d == 0]
     distances = [len(nx.shortest_path(G, source='root', target=node)) for node in terminal_nodes]
     for node in terminal_nodes:
         distance = len(nx.shortest_path(sub_graph, source='root', target=node))
-        if distance <= n_leveles:
-            diff = n_leveles - distance + 1
+        if distance <= n_levels:
+            diff = n_levels - distance + 1
             sub_graph = add_edges(sub_graph, node, diff)
 
     return sub_graph
@@ -87,7 +87,7 @@ class Reactome():
         return df
 
 
-class ReactomeNetwork():
+class ReactomeNetwork:
 
     def __init__(self):
         self.reactome = Reactome()  # low level access to reactome pathways and genes
@@ -131,12 +131,12 @@ class ReactomeNetwork():
         return G
 
     def get_completed_network(self, n_levels):
-        G = complete_network(self.netx, n_leveles=n_levels)
+        G = complete_network(self.netx, n_levels=n_levels)
         return G
 
     def get_completed_tree(self, n_levels):
         G = self.get_tree()
-        G = complete_network(G, n_leveles=n_levels)
+        G = complete_network(G, n_levels=n_levels)
         return G
 
     def get_layers(self, n_levels, direction='root_to_leaf'):

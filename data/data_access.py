@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from data.prostate_paper.data_reader import ProstateDataPaper
+from data.data_processor.data_reader import ProstateDataPaper
 
 class Data():
     def __init__(self, id, type, params, test_size=0.3, stratify=True):
@@ -9,7 +9,7 @@ class Data():
         self.stratify = stratify
         self.data_type = type
         self.data_params = params
-        if self.data_type == 'prostate_paper':
+        if self.data_type == 'data_processor':
             self.data_reader = ProstateDataPaper(**params)
         else:
             logging.error('unsupported data type')
