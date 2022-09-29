@@ -5,23 +5,26 @@ import pandas as pd
 
 from config_path import *
 
+# Path Define
 data_path = DATA_PATH
-
 processed_path = join(DATA_PATH, 'processed')
-
 cached_data = {}
-
+response_filename = join(DATA_PATH, 'processed/response.csv')
+cnv_burden_filename = join(DATA_PATH, 'processed/CNV_burden.csv')
+gene_important_mutations_only = join(DATA_PATH, "processed/somatic_mutations_important_only.csv")
+cnv_filename = join(DATA_PATH, "processed/CNV,csv")
+gene_final_no_silent_no_intron = join(DATA_PATH, "processed/somatic_mutations_important_only.csv")
 
 def load_data(filename, selected_genes=None):
     filename = join(processed_path, filename)
-    logging.info('loading GeneNet_data from %s,' % filename)
+    logging.info(f'loading GeneNet_data from {filename},')
     if filename in cached_data:
         logging.info('loading from memory cached_data')
         data = cached_data[filename]
     else:
         data = pd.read_csv(filename, index_col=0)
         cached_data[filename] = data
-    logging.info(data.shape)
+    logging.info(f"The loaded dataframe's shape is {data.shape}")
 
     if 'response' in cached_data:
         logging.info('loading from memory cached_data')
@@ -32,6 +35,7 @@ def load_data(filename, selected_genes=None):
 
     # join with the labels
     _all = data.join(labels, how='inner')
+    # 去除response=NA
     _all = _all[~_all['response'].isnull()]
 
     response = _all['response']
@@ -81,11 +85,12 @@ def load_data_type(data_type='gene', cnv_levels=5, cnv_filter_single_event=True,
     logging.info('loading {}'.format(data_type))
     if data_type == 'TMB':
         x, response, info, genes = load_TMB(gene_important_mutations_only)
-    if data_type == 'mut_no_silent_no_intron':
-        x, response, info, genes = load_data(gene_final_no_silent_no_intron, selected_genes)
-        if mut_binary:
-            logging.info('mut_binary = True')
-            x[x > 1.] = 1.
+    
+    # if data_type == 'mut_no_silent_no_intron':
+    #     x, response, info, genes = load_data(gene_final_no_silent_no_intron, selected_genes)
+    #     if mut_binary:
+    #         logging.info('mut_binary = True')
+    #         x[x > 1.] = 1.
 
     if data_type == 'mut_important':
         x, response, info, genes = load_data(gene_important_mutations_only, selected_genes)
@@ -93,20 +98,18 @@ def load_data_type(data_type='gene', cnv_levels=5, cnv_filter_single_event=True,
             logging.info('mut_binary = True')
             x[x > 1.] = 1.
 
-    if data_type == 'mut_important_plus_hotspots':
-        x, response, info, genes = load_data(gene_important_mutations_only_plus_hotspots, selected_genes)
+    # if data_type == 'mut_important_plus_hotspots':
+    #     x, response, info, genes = load_data(gene_important_mutations_only_plus_hotspots, selected_genes)
 
-    if data_type == 'mut_hotspots':
-        x, response, info, genes = load_data(gene_hotspots, selected_genes)
+    # if data_type == 'mut_hotspots':
+    #     x, response, info, genes = load_data(gene_hotspots, selected_genes)
 
-    if data_type == 'truncating_mut':
-        x, response, info, genes = load_data(gene_truncating_mutations_only, selected_genes)
-        if mut_binary:
-            logging.info('mut_binary = True')
-            x[x > 1.] = 1.
+    # if data_type == 'truncating_mut':
+    #     x, response, info, genes = load_data(gene_truncating_mutations_only, selected_genes)
+    #     if mut_binary:
+    #         logging.info('mut_binary = True')
+    #         x[x > 1.] = 1.
 
-    # if data_type == 'gene_final_no_silent':
-    #     x, response, info, genes = load_data(gene_final_no_silent, selected_genes)
     if data_type == 'cnv':
         x, response, info, genes = load_data(cnv_filename, selected_genes)
         if cnv_levels == 3:
@@ -165,25 +168,25 @@ def load_data_type(data_type='gene', cnv_levels=5, cnv_filter_single_event=True,
         x[x == -2.] = 1.0
         x[x != -2.] = 0.0
 
-    if data_type == 'gene_expression':
-        x, response, info, genes = load_data(gene_expression, selected_genes)
+    # if data_type == 'gene_expression':
+    #     x, response, info, genes = load_data(gene_expression, selected_genes)
 
-    if data_type == 'fusions':
-        x, response, info, genes = load_data(fusions_filename, None)
+    # if data_type == 'fusions':
+    #     x, response, info, genes = load_data(fusions_filename, None)
 
     if data_type == 'cnv_burden':
         x, response, info, genes = load_data(cnv_burden_filename, None)
         # x.loc[:, :] = 0.
 
-    if data_type == 'fusion_genes':
-        x, response, info, genes = load_data(fusions_genes_filename, selected_genes)
-        # x.loc[:,:]=0.
+    # if data_type == 'fusion_genes':
+    #     x, response, info, genes = load_data(fusions_genes_filename, selected_genes)
+    #     # x.loc[:,:]=0.
 
     return x, response, info, genes
 
 
 def get_response():
-    logging.info('loading response from %s' % response_filename)
+    logging.info(f'loading response from {response_filename}')
     labels = pd.read_csv(join(processed_path, response_filename))
     labels = labels.set_index('id')
     return labels
@@ -396,7 +399,7 @@ class DataClass:
         x = self.x
         y = self.y
         columns = self.columns
-        splits_path = join(PROSTATE_DATA_PATH, 'splits')
+        splits_path = join(DATA_PATH, 'splits')
 
         training_file = 'training_set_{}.csv'.format(self.training_split)
         training_set = pd.read_csv(join(splits_path, training_file))

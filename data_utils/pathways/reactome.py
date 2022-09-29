@@ -3,7 +3,7 @@ import networkx as nx
 import pandas as pd
 from os.path import join
 from config_path import REACTOM_PATHWAY_PATH
-from GeneNet_data.gmt_reader import GMT
+from data_utils.gmt_reader import GMT
 
 reactome_base_dir = REACTOM_PATHWAY_PATH
 relations_file_name = 'ReactomePathwaysRelation.txt'

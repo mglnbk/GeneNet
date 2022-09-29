@@ -1,6 +1,6 @@
 import torch
 import itertools
-from GeneNet_data.pathways.reactome import Reactome, ReactomeNetwork
+from data_utils.pathways.reactome import Reactome, ReactomeNetwork
 import pandas as pd
 import numpy as np
 from torch import nn

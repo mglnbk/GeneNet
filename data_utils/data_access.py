@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from data_processor.data_reader import ProstateDataPaper
+from data_processor.data_reader import DataClass 
 
 class Data():
     def __init__(self, id, type, params, test_size=0.3, stratify=True):
@@ -10,7 +10,7 @@ class Data():
         self.data_type = type
         self.data_params = params
         if self.data_type == 'data_processor':
-            self.data_reader = ProstateDataPaper(**params)
+            self.data_reader = DataClass(**params)
         else:
             logging.error('unsupported GeneNet_data type')
             raise ValueError('unsupported GeneNet_data type')
@@ -32,8 +32,8 @@ class Data():
         columns = self.data_reader.columns
         return x, y, info, columns
 
-    def get_relevant_features(self):
-        if hasattr(self.data_reader, 'relevant_features'):
-            return self.data_reader.get_relevant_features()
-        else:
-            return None
+    # def get_relevant_features(self):
+    #     if hasattr(self.data_reader, 'relevant_features'):
+    #         return self.data_reader.get_relevant_features()
+    #     else:
+    #         return None

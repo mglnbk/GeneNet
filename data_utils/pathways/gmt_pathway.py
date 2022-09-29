@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 import pandas as pd
-from GeneNet_data.gmt_reader import GMT
+from data_utils.gmt_reader import GMT
 
 
 def get_KEGG_map(input_list, filename='c2.cp.kegg.v6.1.symbols.gmt', genes_col=1, shuffle_genes=False):
