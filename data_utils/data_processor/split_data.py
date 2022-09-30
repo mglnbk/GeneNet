@@ -1,9 +1,12 @@
-from os.path import join, dirname
+from os.path import join
 import numpy as np
 import pandas as pd
+import sys
+sys.path.append("/home/sunzehui/GeneNet/")
 from sklearn.model_selection import train_test_split
+from config_path import *
 
-current_dir = dirname(__file__)
+current_dir = DATA_PATH
 input_dir = 'raw_data'
 output_dir = 'splits'
 

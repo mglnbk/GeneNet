@@ -12,7 +12,7 @@ cached_data = {}
 response_filename = join(DATA_PATH, 'processed/response.csv')
 cnv_burden_filename = join(DATA_PATH, 'processed/CNV_burden.csv')
 gene_important_mutations_only = join(DATA_PATH, "processed/somatic_mutations_important_only.csv")
-cnv_filename = join(DATA_PATH, "processed/CNV,csv")
+cnv_filename = join(DATA_PATH, "processed/CNV.csv")
 gene_final_no_silent_no_intron = join(DATA_PATH, "processed/somatic_mutations_important_only.csv")
 
 def load_data(filename, selected_genes=None):

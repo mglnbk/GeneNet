@@ -1,9 +1,9 @@
-import pandas as pd
 import sys
+import pandas as pd
 sys.path.append("/home/sunzehui/GeneNet/")
 from data_utils.data_access import Data
 
-selected_genes = 'tcga_prostate_expressed_genes_and_cancer_genes_and_memebr_of_reactome.csv'
+selected_genes = 'breast_selected_genes.csv'
 selected_samples = 'samples_with_fusion_data.csv'
 data_params = {'id': 'ALL', 'type': 'data_processor',
                'params': {
@@ -37,4 +37,4 @@ x, y, info, columns = data_adapter.get_data()
 x_df = pd.DataFrame(x, columns=columns, index=info)
 print(x_df.shape)
 print(x_df.sum().sum())
-
+print(x_train_df)
