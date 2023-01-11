@@ -1,8 +1,15 @@
+"""data_reader
+
+Returns:
+    _type_: _description_
+"""
 import logging
 from os.path import join
 import numpy as np
 import pandas as pd
 
+import sys
+sys.path.append("/home/sunzehui/GeneNet/")
 from config_path import *
 
 # Path Define
@@ -50,7 +57,7 @@ def load_data(filename, selected_genes=None):
         if len(intersect) < len(selected_genes):
             # raise Exception('wrong gene')
             logging.warning('some genes dont exist in the original GeneNet_data set')
-        x = x.loc[:, intersect]
+        x = x.loc[:, list(intersect)]
         genes = intersect
     logging.info('loaded GeneNet_data %d samples, %d variables, %d responses ' % (x.shape[0], x.shape[1], response.shape[0]))
     logging.info(len(genes))
@@ -182,7 +189,7 @@ def load_data_type(data_type='gene', cnv_levels=5, cnv_filter_single_event=True,
     #     x, response, info, genes = load_data(fusions_genes_filename, selected_genes)
     #     # x.loc[:,:]=0.
 
-    return x, response, info, genes
+    return(x, response, info, genes)
 
 
 def get_response():
@@ -363,8 +370,8 @@ class DataClass:
             x_all = pd.concat([x_genomics, x_account_for], keys=['genomics', 'account_for'], join='inner', axis=1)
 
             common_samples = set(rows).intersection(x_all.index)
-            x_all = x_all.loc[common_samples, :]
-            y = y_genomics.loc[common_samples, :]
+            x_all = x_all.loc[list(common_samples), :]
+            y = y_genomics.loc[list(common_samples), :]
 
             y = y['response'].values
             x = x_all.values

@@ -1,4 +1,5 @@
-from os.path import expanduser
+from os.path import expanduse
+import 
 from data_utils.pathways.gmt_pathway import get_KEGG_map
 
 input_genes = ['AR', 'AKT', 'EGFR']

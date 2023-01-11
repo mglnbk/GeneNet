@@ -1,8 +1,12 @@
 import logging
 import numpy as np
+import sys
+sys.path.append("/home/sunzehui/GeneNet/data_utils/")
 from data_processor.data_reader import DataClass 
 
 class Data():
+    """Data Class
+    """
     def __init__(self, id, type, params, test_size=0.3, stratify=True):
 
         self.test_size = test_size
