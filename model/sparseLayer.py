@@ -47,16 +47,15 @@ class SparseLinear(layers.Layer):
     return self.w
 
 
-net = ReactomeNetwork()
-layers = net.get_layers(n_levels=2)
+if __name__ == "__main__":
+  net = ReactomeNetwork()
+  layers = net.get_layers(n_levels=3)
+  model = tf.keras.Sequential()
+  for i, layer in enumerate(layers[::-1]):
+    mapp = get_map_from_layer(layer)
+    assert (type(mapp) == pd.DataFrame)
+    model.add(SparseLinear(mapp))
 
-model = tf.keras.Sequential()
 
-for i, layer in enumerate(layers[::-1]):
-  mapp = get_map_from_layer(layer)
-  mask = mapp.to_numpy()
-  print(mask.shape)
-  model.add(SparseLinear(mask))
-
-model(tf.ones((10, 11336)))
-model.summary()
+  model(tf.ones((10, 10959)))
+  model.summary()

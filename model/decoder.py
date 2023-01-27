@@ -191,8 +191,14 @@ def get_genenet(inputs, features, genes, n_hidden_layers, direction, activation,
 
 
 class sparse_decoder(tf.keras.layers.Layer):
-    def __init__(self, trainable=True, name=None, dtype=None, dynamic=False, **kwargs):
-        super().__init__(trainable, name, dtype, dynamic, **kwargs)
+    def __init__(self,  
+                 inputs, features, genes, n_hidden_layers, direction, activation, 
+                 activation_decision, w_reg, w_reg_outcomes, dropout, sparse, 
+                 add_unk_genes, batch_normal, kernel_initializer, use_bias=False,
+                 trainable=True, name="Sparse_Decoder", dtype=None, dynamic=False, 
+                 shuffle_genes=False, attention=False, dropout_testing=False, 
+                 non_neg=False, sparse_first_layer=True):
+        super().__init__(trainable, name, dtype, dynamic)
         
     def call(self, inputs, **kwargs):
         return super().call(inputs, **kwargs)
