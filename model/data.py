@@ -316,8 +316,8 @@ class Dataset:
         self.barcodes = rows
         self.gene_features = cols
         
-    def returnDataset(self):
-        print(type(self._data.values))
+    def shape(self):
+        return self._data.shape
         
     def statistics(self):
         print(f"This dataset includes {len(self.barcodes)} samples")
