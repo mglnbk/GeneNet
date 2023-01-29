@@ -1,12 +1,16 @@
 import tensorflow as tf
 import itertools
-import sys
+import sys  
 sys.path.append('/home/sunzehui/GeneNet')
 from data_utils.pathways.reactome import Reactome, ReactomeNetwork
 import pandas as pd
 import numpy as np
 from tensorflow.keras import layers
-
+import logging
+from tensorflow.keras.constraints import NonNeg
+from tensorflow.keras.initializers import GlorotNormal, GlorotUniform
+from tensorflow.keras.regularizers import L1, L2
+from tensorflow.keras.layers import Dropout
 
 def get_map_from_layer(layer_dict):
   """
@@ -22,40 +26,179 @@ def get_map_from_layer(layer_dict):
   df = df.fillna(0)
   return df.T
 
+def get_layer_maps(genes, n_levels, direction='root_to_leaf', add_unk_genes=True):
+    """Obtain layer mappings 
+
+    Args:
+        genes (list): selected_genes for latent layers
+        n_levels (int): number of decode layers
+        direction (str): default to 'root_to_leaf'
+        add_unk_genes (bool): default to True
+
+    Returns:
+        list: [df1, df2, df3, df4, ...]
+    """
+    reactome_layers = ReactomeNetwork().get_layers(n_levels, direction)
+    filtering_index = genes # gene
+    maps = []
+    for i, layer in enumerate(reactome_layers[::-1]):
+        print('layer #', i)
+        mapp = get_map_from_layer(layer)
+        filter_df = pd.DataFrame(index=filtering_index)
+        print('filtered_map', filter_df.shape)
+        filtered_map = filter_df.merge(mapp, right_index=True, left_index=True, how='left')
+        print('filtered_map', filter_df.shape)
+
+        if add_unk_genes:
+            print('UNK ')
+            filtered_map['UNK'] = 0
+            ind = filtered_map.sum(axis=1) == 0
+            filtered_map.loc[ind, 'UNK'] = 1
+
+        filtered_map = filtered_map.fillna(0)
+        print('filtered_map', filter_df.shape)
+        filtering_index = filtered_map.columns
+        logging.info('layer {} , # of edges  {}'.format(i, filtered_map.sum().sum()))
+        maps.append(filtered_map)
+    return maps
 
 class SparseLinear(layers.Layer):
-  def __init__(self, _mapp):
+  def __init__(
+    self, 
+    _mapp, 
+    constraint=NonNeg, 
+    regularizer="L2",
+    initializer="GlorotUniform",
+    use_bias=True,
+    dropout_rate=.0
+  ):
+    """Creat tensorflow kernel
+
+    Args:
+        _mapp (pd.DataFrame): _description_
+        constraint (_type_, optional): _description_. Defaults to NonNeg.
+        regularizer (str, optional): _description_. Defaults to "L2".
+        initializer (str, optional): _description_. Defaults to "GlorotUniform".
+        use_bias (bool, optional): _description_. Defaults to True.
+        dropout_rate (float, optional): _description_. Defaults to 0.
+    """
     super().__init__()
     if type(_mapp)==pd.DataFrame:
-      self.mapp = _mapp.values
+      self.mapp=_mapp.values
     else:
-      self.mapp = _mapp
+      self.mapp=_mapp
+    if regularizer == "L2":
+      self.regularizer=L2
+    else:
+      self.regularizer=L1
+    if initializer == "GlorotUniform":
+      self.initializer=GlorotUniform
+    else:
+      self.initializer=GlorotNormal
+    self.constraint=constraint
+    self.use_bias = use_bias
+    self.bias = None
+    self.units = _mapp.shape[-1]
+    self.dropout_rate = dropout_rate
+    self.dropout=None
     
   def build(self, input_shape):
-    w_init = tf.random_normal_initializer()
-    self.w = tf.Variable(
-        initial_value=w_init(shape=(input_shape[-1], self.mapp.shape[1])),
+    last_dim = tf.compat.dimension_value(input_shape[-1])
+    self.kernel=self.add_weight(
+      "kernel",
+      shape=[last_dim, self.units],
+      initializer=self.initializer,
+      regularizer=self.regularizer,
+      constraint=self.constraint,
+      trainable=True,
+      dtype=self.dtype
+      )
+    self.mask = tf.Variable(
+      initial_value = self.mapp, 
+      trainable = False, 
+      dtype = self.dtype
+      )
+    if self.use_bias == True:
+      self.bias = self.add_weight(
+        "bias",
+        shape = [self.units,],
+        initializer=self.initializer,
+        regularizer=self.regularizer,
+        constraint=self.constraint,
         trainable=True,
-        dtype='float32'
-        )
-    self.mask = tf.Variable(initial_value = self.mapp, trainable = False, dtype = 'float32')
+        dtype=self.dtype
+      )
     
   def call(self, input):
-    return tf.matmul(input, self.mask * self.w)
+    if self.use_bias:
+      outputs=tf.matmul(input, self.mask * self.kernel)+self.bias
+    else:
+      outputs=tf.matmul(input, self.mask * self.kernel)
+    if self.dropout_rate!=0:
+      self.dropout=Dropout(rate=self.dropout_rate,
+                           noise_shape=self.units)
+      outputs=self.dropout(outputs)
+    
+    return outputs
 
   def getWeight(self):
-    return self.w
+    return self.kernel
+
+class Decoder(layers.Layer):
+  def __init__(
+    self, 
+    genes,nb_layers, 
+    activation, 
+    dropout, 
+    initializer, 
+    regularizer,
+    constraint
+    ):
+    """Decoder Layers biologically informed
+
+    Args:
+        genes (list): Latent layer gene, shuffled
+        nb_layers (int): number of layers
+        activation (str): 'relu' or 'tanh'
+        dropout (float): if 0, then no dropout
+        initializer (str): "GolorotUniform" or "GolorotNormal"
+        regularizer (list): l2
+        constraint (str): 'NonNeg'
+    """
+    super().__init__()
+    self.activation=activation
+    self.nb_layers=nb_layers
+    self.initializer=initializer
+    self.genes=genes
+    self.regularizer=regularizer
+    self.constraint=constraint
+    
+    self.decoder_list=[]
+    self.activation_list=[]
+
+  def build(self, input_shape):
+    mapp_dict=get_layer_maps(self.genes, n_levels=self.nb_layers)
+
+    for nb, i in enumerate(mapp_dict[:-1]):
+      self.decoder_list.append(SparseLinear(_mapp=i, dropout_rate=.3))
+    
+
+  def call(self, inputs):
+    outputs=inputs
+    for i in self.decoder_list:
+      
+     
 
 
 if __name__ == "__main__":
   net = ReactomeNetwork()
   layers = net.get_layers(n_levels=3)
   model = tf.keras.Sequential()
-  for i, layer in enumerate(layers[::-1]):
-    mapp = get_map_from_layer(layer)
-    assert (type(mapp) == pd.DataFrame)
-    model.add(SparseLinear(mapp))
+  genes = ['ABC1', 'TP53', 'PTEN']
+  
+  for i in get_layer_maps(genes, n_levels=4)[:-1]:
+    print(i, np.sum(np.sum(i)))
+    model.add(SparseLinear(i))
 
-
-  model(tf.ones((10, 10959)))
+  model(tf.ones((10, 3)))
   model.summary()
