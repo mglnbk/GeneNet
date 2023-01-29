@@ -10,7 +10,8 @@ import logging
 from tensorflow.keras.constraints import NonNeg
 from tensorflow.keras.initializers import GlorotNormal, GlorotUniform
 from tensorflow.keras.regularizers import L1, L2
-from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Dropout, ReLU
+from tensorflow.keras.activations import tanh, sigmoid, relu
 
 def get_map_from_layer(layer_dict):
   """
@@ -147,12 +148,13 @@ class SparseLinear(layers.Layer):
 class Decoder(layers.Layer):
   def __init__(
     self, 
-    genes,nb_layers, 
-    activation, 
-    dropout, 
-    initializer, 
-    regularizer,
-    constraint
+    genes,
+    nb_layers, 
+    # activation, 
+    # dropout, 
+    # initializer, 
+    # regularizer,
+    # constraint
     ):
     """Decoder Layers biologically informed
 
@@ -166,12 +168,12 @@ class Decoder(layers.Layer):
         constraint (str): 'NonNeg'
     """
     super().__init__()
-    self.activation=activation
-    self.nb_layers=nb_layers
-    self.initializer=initializer
     self.genes=genes
-    self.regularizer=regularizer
-    self.constraint=constraint
+    self.nb_layers=nb_layers
+    # self.activation=activation
+    # self.initializer=initializer
+    # self.regularizer=regularizer
+    # self.constraint=constraint
     
     self.decoder_list=[]
     self.activation_list=[]
@@ -180,15 +182,23 @@ class Decoder(layers.Layer):
     mapp_dict=get_layer_maps(self.genes, n_levels=self.nb_layers)
 
     for nb, i in enumerate(mapp_dict[:-1]):
-      self.decoder_list.append(SparseLinear(_mapp=i, dropout_rate=.3))
+      self.decoder_list.append(
+        SparseLinear(_mapp=i, 
+                     initializer="GolorotUniform", 
+                     regularizer="L2", 
+                     use_bias=True,
+                     dropout_rate=.3)
+                               )
     
 
   def call(self, inputs):
     outputs=inputs
-    for i in self.decoder_list:
+    for decoder_layer in self.decoder_list:
+      outputs = decoder_layer(outputs)
+      outputs = relu(outputs)
+    
+    return outputs
       
-     
-
 
 if __name__ == "__main__":
   net = ReactomeNetwork()
@@ -196,9 +206,5 @@ if __name__ == "__main__":
   model = tf.keras.Sequential()
   genes = ['ABC1', 'TP53', 'PTEN']
   
-  for i in get_layer_maps(genes, n_levels=4)[:-1]:
-    print(i, np.sum(np.sum(i)))
-    model.add(SparseLinear(i))
-
-  model(tf.ones((10, 3)))
-  model.summary()
+  d = Decoder(genes=genes, nb_layers=4)
+  print(d(tf.ones((10, 3))))

@@ -9,9 +9,15 @@ class encoder(layers.Layer):
     condensed latent layer, stakced)
 
     Args:
-        layers (_type_): _description_
+        layers （tensorflow.layers.Layer): _description_
     """
-    def __init__(self, units, input_dim, regularizer, initializer, name=None):
+    def __init__(self, 
+                 units, 
+                 input_dim, 
+                 regularizer, 
+                 initializer, 
+                 name=None
+                 ):
         super().__init__()
         self.initializer = initializer
         self.regularizer = regularizer
@@ -20,7 +26,10 @@ class encoder(layers.Layer):
                                  regularizer = self.regularizer,
                                  trainable= True
                                  )
-        self.b = self.add_weight(shape=(units,), initializer="zeros", trainable=True) 
+        self.b = self.add_weight(shape=(units,), 
+                                 initializer="zeros", 
+                                 trainable=True
+                                 ) 
     
     def build(self, input_shape):
         return super().build(input_shape)
