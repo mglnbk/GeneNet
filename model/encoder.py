@@ -2,38 +2,32 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import layers
+from tensorflow.keras.layers import Dense
 
 
 class encoder(layers.Layer):
-    """encoder layer(Dense Layer, encode genetic profile data into
-    condensed latent layer, stakced)
+  """encoder layer(Dense Layer, encode genetic profile data into
+  condensed latent layer, stakced)
 
-    Args:
-        layers （tensorflow.layers.Layer): _description_
-    """
-    def __init__(self, 
-                 units, 
-                 input_dim, 
-                 regularizer, 
-                 initializer, 
-                 name=None
-                 ):
-        super().__init__()
-        self.initializer = initializer
-        self.regularizer = regularizer
-        self.w = self.add_weight(shape = (input_dim, units),
-                                 initializer = self.initializer,
-                                 regularizer = self.regularizer,
-                                 trainable= True
-                                 )
-        self.b = self.add_weight(shape=(units,), 
-                                 initializer="zeros", 
-                                 trainable=True
-                                 ) 
+  Args:
+    layers (tensorflow.layers.Layer): _description_
+  """
+  def __init__(self,  
+               n_layers = 2
+               ):
+    super().__init__()
+    self.n_layers=n_layers
+    self.layers=[]
     
-    def build(self, input_shape):
-        return super().build(input_shape)
+  def build(self, input_shape):
+    last_dim = tf.compat.dimension_value(input_shape[-1])
+    self.layers.append(Dense(units=128, activation="relu", input_shape=(last_dim,)))
+    self.layers.append(Dense(units=64, activation="relu"))
+    self.layers.append(Dense(units=32, activation="relu"))
+    self.layers.append(Dense(units=4, activation='relu'))
     
-    def call(self, inputs):
-        return tf.matmul(inputs, self.w) + self.b
-
+  def call(self, inputs):
+    outputs=inputs
+    for layer in self.layers:
+      outputs=layer(outputs)
+    return outputs

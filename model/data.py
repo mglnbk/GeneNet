@@ -2,13 +2,10 @@ import pandas as pd
 import logging
 from os.path import join
 import sys
-import os
-import numpy as np
 import tensorflow as tf
 sys.path.append("/home/sunzehui/GeneNet/")
 from data_utils.pathways.reactome import Reactome, ReactomeNetwork
 from config_path import *
-import data_utils.data_access
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Input

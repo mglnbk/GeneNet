@@ -145,7 +145,7 @@ class SparseLinear(layers.Layer):
   def getWeight(self):
     return self.kernel
 
-class Decoder(layers.Layer):
+class decoder(layers.Layer):
   def __init__(
     self, 
     genes,
@@ -189,6 +189,7 @@ class Decoder(layers.Layer):
                      use_bias=True,
                      dropout_rate=.3)
                                )
+      print(i.shape)
     
 
   def call(self, inputs):
@@ -206,5 +207,5 @@ if __name__ == "__main__":
   model = tf.keras.Sequential()
   genes = ['ABC1', 'TP53', 'PTEN']
   
-  d = Decoder(genes=genes, nb_layers=4)
+  d = decoder(genes=genes, nb_layers=4)
   print(d(tf.ones((10, 3))))
